@@ -1,0 +1,397 @@
+#!/bin/bash
+
+ 
+
+#checking for recyclebin directory
+
+ 
+
+function dirCheck()
+
+{
+
+        if ! find $HOME/recyclebin &> /dev/null
+
+        then
+
+                mkdir $HOME/recyclebin
+
+                touch $HOME/.restore.info
+
+        fi
+
+}
+
+ 
+
+#checking arguments parameters
+
+ 
+
+function argCheck()
+
+{
+
+ 
+
+#if no arguments exit
+
+ 
+
+        if [ $# -eq 0 ]
+
+        then
+
+                echo recycle: missing operand
+
+                exit 1
+
+        fi
+
+ 
+
+#parsing all arguments
+
+ 
+
+        for a in $*
+
+        do
+
+ 
+
+#checking if your argument is the recycle script
+
+ 
+
+                case $(readlink -f $a) in
+
+                        $HOME/unixTechnical/recycle)
+
+                                echo Attempting to delete recycle-operation aborted
+
+                                exit 1
+
+                                ;;
+
+                esac
+
+ 
+
+#checking if your argument is a directory, if using getopts then passing to getOpt function
+
+ 
+
+                if [ -d $a ]
+
+                then
+
+                        if [ $optNum -gt 1 ]
+
+                        then
+
+                                deleteDirectory=$a
+
+                                getOpt
+
+                        else
+
+                                echo recycle: cannot remove $a: is a directory
+
+                       fi
+
+ 
+
+#checking if your file exists
+
+ 
+
+                elif ! find $(readlink -f $a) -maxdepth 1 &> /dev/null
+
+                then
+
+                                echo recycle: cannot remove $a: no such file or directory
+
+ 
+
+#checking for getopts, if using passing to getOpt function
+
+ 
+
+                elif [ $optNum -gt 1 ]
+
+                then
+
+                        deleteFile=$a
+
+                        getOpt
+
+                else
+
+                        deleteFile=$a
+
+                        fileDelete
+
+                fi
+
+        done
+
+ 
+
+}
+
+ 
+
+#setting up getOpts
+
+ 
+
+function optFunc()
+
+{
+
+        v=false
+
+        i=false
+
+        r=false
+
+ 
+
+        while getopts :vir opt
+
+        do
+
+        case $opt in
+
+                v)
+
+                        v=true
+
+                        ;;
+
+                i)
+
+                        i=true
+
+                        ;;
+
+                r)
+
+                        r=true
+
+                        ;;
+
+                *)
+
+                        echo wrong operand
+
+                        exit 5
+
+        esac
+
+        done
+
+ 
+
+}
+
+ 
+
+#running getopts
+
+ 
+
+function getOpt()
+
+{
+
+        if $i
+
+        then
+
+                echo remove $deleteFile ?
+
+                read var
+
+                case $var in
+
+                        "Y"*)
+
+                                fileDelete
+
+                                ;;
+
+                        "y"*)
+
+                                fileDelete
+
+                                ;;
+
+                esac
+
+        fi
+
+ 
+
+        if $v
+
+        then
+
+                if $i
+
+                then
+
+                        echo $deleteFile deleted
+
+                else
+
+                        fileDelete
+
+                        echo $deleteFile deleted
+
+                fi
+
+        fi
+
+ 
+
+        if $r
+
+        then
+
+                directoryDelete
+
+        fi
+
+ 
+
+ 
+
+ 
+
+}
+
+ 
+
+#delete a file
+
+ 
+
+function fileDelete()
+
+{
+
+ 
+
+#set variables for deletion then move files appropriately
+
+ 
+
+        fileNode=$(ls -i $deleteFile | cut -d " " -f1)
+
+        fileName=$(basename $deleteFile)
+
+        filePath=$(dirname $deleteFile)
+
+        fullPath=$(readlink -f $deleteFile)
+
+ 
+
+        recycleName=$fileName"_"$fileNode
+
+ 
+
+        mv $filePath/$fileName $filePath/$recycleName
+
+        mv $filePath/$recycleName $HOME/recyclebin
+
+        echo $recycleName":"$fullPath >> $HOME/.restore.info
+
+ 
+
+}
+
+ 
+
+#parse a directory and recursively delete it's files
+
+ 
+
+function directoryDelete()
+
+{
+
+ 
+
+        for a in $deleteDirectory/*
+
+        do
+
+ 
+
+#if $a is a directory we reset the directory varaibale and rerun directoryDelete
+
+ 
+
+                if find $deleteDirectory -empty
+
+                then
+
+ 
+
+                        continue
+
+ 
+
+                elif [ -d $a ]
+
+                then
+
+                        saved=$deleteDirectory
+
+                        deleteDirectory=$a
+
+                        directoryDelete
+
+                        deleteDirectory=$saved
+
+ 
+
+#else just delete the file
+
+ 
+
+                else
+
+                        deleteFile=$a
+
+                        fileDelete
+
+                fi
+
+        done
+
+ 
+
+        rm -r $deleteDirectory
+
+ 
+
+}
+
+ 
+
+##########################################################Function Calls
+
+ 
+
+dirCheck
+
+optFunc $*
+
+optNum=$OPTIND #<to easily check if your using getopts
+
+shift $[OPTIND-1]
+
+argCheck $*
