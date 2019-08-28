@@ -1,4 +1,4 @@
-# unixRecycle
+# unixRecycle_Restore
 Recycle script written in unix
 
 If you don't want to commit to rm or rmdir here is a recycle bin script
