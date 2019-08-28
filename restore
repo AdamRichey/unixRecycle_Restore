@@ -1,0 +1,141 @@
+#!/bin/bash
+
+ 
+
+#checking argument parameters
+
+ 
+
+fileCheck()
+
+{
+
+ 
+
+#checking if there are no arguments
+
+ 
+
+        if [ $# -eq 0 ]
+
+        then
+
+                echo restore: missing operand
+
+                exit 1
+
+        fi
+
+ 
+
+#parsing the arguments
+
+ 
+
+        for a in $*
+
+                do
+
+                rpath=$(grep ^$a $HOME/.restore.info | cut -d ":" -f2)
+
+ 
+
+#checking if file exists in recyclebin
+
+ 
+
+                if ! find $HOME/recyclebin/$a &> /dev/null
+
+                then
+
+                        echo restore: cannot restore $a: file does not exist
+
+ 
+
+#checking if file is already in your target directory and if you want to overwrite it
+
+ 
+
+                elif [ -f $rpath ]
+
+                then
+
+                        echo "File exists in path: Do you want to overwrite? y/n"
+
+                        read var
+
+                        case $var in
+
+                                "Y"*)
+
+                                        restoreFile=$a
+
+                                        restore
+
+                                        ;;
+
+                                "y"*)
+
+                                        restoreFile=$a
+
+                                        restore
+
+                                        ;;
+
+                        esac
+
+                else
+
+                        restoreFile=$a
+
+                        restore
+
+                fi
+
+        done
+
+ 
+
+ 
+
+}
+
+ 
+
+function restore()
+
+{
+
+ 
+
+#setting path name and line for the restore
+
+ 
+
+                path=$(grep ^$restoreFile $HOME/.restore.info | cut -d ":" -f2)
+
+                name=$(grep ^$restoreFile $HOME/.restore.info | cut -d "_" -f1)
+
+                line=$(grep -n ^$restoreFile $HOME/.restore.info | cut -d ":" -f1)
+
+ 
+
+#moving file to its original path and name
+
+ 
+
+                                mv $HOME/recyclebin/$restoreFile $(dirname $path)
+
+                mv $(dirname $path)/$restoreFile $(dirname $path)/$name
+
+                sed -i $line"d" $HOME/.restore.info
+
+ 
+
+ 
+
+}
+
+ 
+
+fileCheck $*
