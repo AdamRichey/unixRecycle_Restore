@@ -12,3 +12,22 @@ Script uses readlink function, if using apple bash you'll need to implement 'gre
 NOTE your recyclebin will be created in your home directory as well as a hidden restore info file
 
 See restore repository to easily restore your file to it's original location with a restore script
+
+USING SCRIPT:
+
+  bash recycle <filename>
+  OR
+  sh recycle <filename>
+
+   Operands
+      -v
+          Confirm's recycle
+      -i
+          Asks user to confirm file recycle
+      -r
+          Recursively recycles a diretory
+      
+  bash restore <filename>
+  OR
+  sh restore <filname>
+      
